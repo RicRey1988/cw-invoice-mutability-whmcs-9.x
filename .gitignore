@@ -1,0 +1,9 @@
+*.zip
+*.tar.gz
+.DS_Store
+.idea/
+.vscode/
+.env
+*.log
+/vendor/
+node_modules/
