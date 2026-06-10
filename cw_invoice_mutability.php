@@ -15,46 +15,46 @@ function cw_invoice_mutability_config()
 {
     return [
         'name' => 'CW Invoice Mutability',
-        'description' => 'Permite activar la edición de facturas en WHMCS 9 sin editar manualmente configuration.php, ocultar el banner de advertencia y, opcionalmente, convertir facturas Unpaid a Draft con auditoría. Creado por Codigoweb.dev. Donaciones: https://paypal.me/hostingsupremo',
+        'description' => 'Allows WHMCS 9 administrators to manage invoice mutability without manually editing configuration.php, optionally hide the warning banner, and convert eligible Unpaid invoices to Draft with audit logging. Created by Codigoweb.dev. Donations: https://paypal.me/hostingsupremo',
         'version' => '1.1.0',
         'author' => '<a href="https://codigoweb.dev" target="_blank" rel="noopener">Codigoweb.dev</a>',
-        'language' => 'spanish',
+        'language' => 'english',
         'fields' => [
             'enable_mutation' => [
-                'FriendlyName' => 'Permitir edición de facturas',
+                'FriendlyName' => 'Allow invoice editing',
                 'Type' => 'yesno',
                 'Size' => '25',
                 'Default' => '',
-                'Description' => 'Activa la mutabilidad de facturas publicadas/no Draft en el área administrativa.',
+                'Description' => 'Enables mutability for published/non-Draft invoices in the admin area.',
             ],
             'write_configuration' => [
-                'FriendlyName' => 'Usar configuración oficial persistente',
+                'FriendlyName' => 'Use official persistent configuration',
                 'Type' => 'yesno',
                 'Size' => '25',
                 'Default' => 'on',
-                'Description' => 'Agrega o remueve automáticamente $allow_adminarea_invoice_mutation = true; en configuration.php. Es la vía oficial documentada por WHMCS mientras exista.',
+                'Description' => 'Automatically adds or removes $allow_adminarea_invoice_mutation = true; in configuration.php. This is the official WHMCS compatibility path while it remains available.',
             ],
             'hide_banner' => [
-                'FriendlyName' => 'Ocultar banner de advertencia',
+                'FriendlyName' => 'Hide warning banner',
                 'Type' => 'yesno',
                 'Size' => '25',
                 'Default' => 'on',
-                'Description' => 'Oculta solo el banner del Admin Area que indica que la inmutabilidad de facturas está desactivada.',
+                'Description' => 'Only hides the Admin Area warning banner that says invoice immutability is disabled.',
             ],
             'enable_draft_tools' => [
-                'FriendlyName' => 'Modo avanzado: convertir a Draft',
+                'FriendlyName' => 'Advanced mode: convert to Draft',
                 'Type' => 'yesno',
                 'Size' => '25',
                 'Default' => '',
-                'Description' => 'Permite convertir facturas Unpaid sin transacciones a Draft con snapshot y log. Úsalo solo para casos internos/no fiscalizados.',
+                'Description' => 'Allows eligible Unpaid invoices without transactions to be converted to Draft with snapshot and audit log. Use only for internal/non-fiscalized cases.',
             ],
             'draft_guard_keywords' => [
-                'FriendlyName' => 'Palabras de protección fiscal',
+                'FriendlyName' => 'Fiscal protection keywords',
                 'Type' => 'textarea',
                 'Rows' => '6',
                 'Cols' => '70',
                 'Default' => CwInvoiceMutabilityTools::defaultGuardKeywords(),
-                'Description' => 'Si estas palabras aparecen en notas, número o ítems de la factura, el módulo bloquea la conversión a Draft.',
+                'Description' => 'If these words appear in invoice notes, invoice number, or invoice items, the module blocks Draft conversion.',
             ],
         ],
     ];
@@ -82,12 +82,12 @@ function cw_invoice_mutability_activate()
 
         return [
             'status' => 'success',
-            'description' => 'CW Invoice Mutability activado. Ingresa al módulo para habilitar la edición de facturas y, si lo necesitas, el modo avanzado Draft.',
+            'description' => 'CW Invoice Mutability activated. Open the addon module to enable invoice editing and, if needed, the advanced Draft mode.',
         ];
     } catch (Throwable $e) {
         return [
             'status' => 'error',
-            'description' => 'Error al activar: ' . $e->getMessage(),
+            'description' => 'Activation error: ' . $e->getMessage(),
         ];
     }
 }
@@ -101,12 +101,12 @@ function cw_invoice_mutability_deactivate()
 
         return [
             'status' => 'success',
-            'description' => 'CW Invoice Mutability desactivado. La bandera oficial fue removida si estaba presente. Los logs de auditoría se conservan.',
+            'description' => 'CW Invoice Mutability deactivated. The official flag was removed if present. Audit logs are preserved.',
         ];
     } catch (Throwable $e) {
         return [
             'status' => 'error',
-            'description' => 'Error al desactivar: ' . $e->getMessage(),
+            'description' => 'Deactivation error: ' . $e->getMessage(),
         ];
     }
 }
@@ -127,20 +127,20 @@ function cw_invoice_mutability_upgrade($vars)
 function cw_invoice_mutability_renderInvoiceSearch(string $moduleLink, string $nonce, int $selectedInvoiceId): void
 {
     echo '<div class="panel panel-default" id="cwim-draft-tools">';
-    echo '<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-edit"></i> Modo avanzado: convertir factura a Draft</h3></div>';
+    echo '<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-edit"></i> Advanced mode: convert invoice to Draft</h3></div>';
     echo '<div class="panel-body">';
 
-    echo '<div class="alert alert-danger"><strong>Uso delicado:</strong> esta herramienta cambia el estado interno de la factura directamente en base de datos. Solo se permite para facturas <strong>Unpaid</strong>, sin transacciones y no protegidas por palabras fiscales. No debe usarse en facturas pagadas, autorizadas por SRI, fiscalizadas o sincronizadas con un sistema externo.</div>';
+    echo '<div class="alert alert-danger"><strong>Sensitive operation:</strong> this tool changes the internal invoice status directly in the database. It is only allowed for <strong>Unpaid</strong> invoices without transactions and without fiscal protection keyword matches. Do not use it for paid, tax-authorized, fiscalized, or externally synchronized invoices.</div>';
 
     echo '<form method="get" action="addonmodules.php" class="form-inline" style="margin-bottom:15px;">';
     echo '<input type="hidden" name="module" value="cw_invoice_mutability">';
-    echo '<div class="form-group"><label for="cwim_invoice_id">Factura #</label> ';
-    echo '<input type="number" min="1" class="form-control" id="cwim_invoice_id" name="invoice_id" value="' . ($selectedInvoiceId > 0 ? CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) : '') . '" placeholder="Ej. 1234"></div> ';
-    echo '<button type="submit" class="btn btn-default"><i class="fa fa-search"></i> Revisar factura</button>';
+    echo '<div class="form-group"><label for="cwim_invoice_id">Invoice #</label> ';
+    echo '<input type="number" min="1" class="form-control" id="cwim_invoice_id" name="invoice_id" value="' . ($selectedInvoiceId > 0 ? CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) : '') . '" placeholder="e.g. 1234"></div> ';
+    echo '<button type="submit" class="btn btn-default"><i class="fa fa-search"></i> Review invoice</button>';
     echo '</form>';
 
     if ($selectedInvoiceId <= 0) {
-        echo '<p class="text-muted">Ingresa el ID de una factura para revisar si puede convertirse a Draft.</p>';
+        echo '<p class="text-muted">Enter an invoice ID to check whether it can be converted to Draft.</p>';
         echo '</div></div>';
         return;
     }
@@ -160,24 +160,24 @@ function cw_invoice_mutability_renderInvoiceSearch(string $moduleLink, string $n
     $total = isset($invoice['total']) ? number_format((float) $invoice['total'], 2) : '';
     $balance = isset($invoice['balance']) ? number_format((float) $invoice['balance'], 2) : '';
 
-    echo '<h4>Factura #' . CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) . '</h4>';
+    echo '<h4>Invoice #' . CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) . '</h4>';
     echo '<div class="row">';
     echo '<div class="col-md-6">';
     echo '<table class="table table-striped table-condensed"><tbody>';
-    echo '<tr><th>Estado</th><td><span class="label label-' . ($status === 'Draft' ? 'info' : ($status === 'Unpaid' ? 'warning' : 'default')) . '">' . CwInvoiceMutabilityTools::html($status) . '</span></td></tr>';
-    echo '<tr><th>Cliente</th><td>' . CwInvoiceMutabilityTools::html($clientLabel) . '</td></tr>';
+    echo '<tr><th>Status</th><td><span class="label label-' . ($status === 'Draft' ? 'info' : ($status === 'Unpaid' ? 'warning' : 'default')) . '">' . CwInvoiceMutabilityTools::html($status) . '</span></td></tr>';
+    echo '<tr><th>Client</th><td>' . CwInvoiceMutabilityTools::html($clientLabel) . '</td></tr>';
     echo '<tr><th>Total / Balance</th><td>' . CwInvoiceMutabilityTools::html($total) . ' / ' . CwInvoiceMutabilityTools::html($balance) . '</td></tr>';
-    echo '<tr><th>Fecha / Vencimiento</th><td>' . CwInvoiceMutabilityTools::html((string) ($invoice['date'] ?? '')) . ' / ' . CwInvoiceMutabilityTools::html((string) ($invoice['duedate'] ?? '')) . '</td></tr>';
-    echo '<tr><th>Fecha de pago</th><td>' . CwInvoiceMutabilityTools::html((string) ($invoice['datepaid'] ?? '')) . '</td></tr>';
-    echo '<tr><th>Ítems / Transacciones</th><td>' . count($assessment['items']) . ' / ' . count($assessment['transactions']) . '</td></tr>';
+    echo '<tr><th>Date / Due Date</th><td>' . CwInvoiceMutabilityTools::html((string) ($invoice['date'] ?? '')) . ' / ' . CwInvoiceMutabilityTools::html((string) ($invoice['duedate'] ?? '')) . '</td></tr>';
+    echo '<tr><th>Payment Date</th><td>' . CwInvoiceMutabilityTools::html((string) ($invoice['datepaid'] ?? '')) . '</td></tr>';
+    echo '<tr><th>Items / Transactions</th><td>' . count($assessment['items']) . ' / ' . count($assessment['transactions']) . '</td></tr>';
     echo '</tbody></table>';
     echo '</div>';
 
     echo '<div class="col-md-6">';
     if ($assessment['allowed']) {
-        echo '<div class="alert alert-success"><strong>Validación:</strong> esta factura puede convertirse a Draft según las reglas actuales.</div>';
+        echo '<div class="alert alert-success"><strong>Validation:</strong> this invoice can be converted to Draft under the current rules.</div>';
     } else {
-        echo '<div class="alert alert-warning"><strong>Validación:</strong> esta factura no puede convertirse automáticamente.</div>';
+        echo '<div class="alert alert-warning"><strong>Validation:</strong> this invoice cannot be converted automatically.</div>';
         echo '<ul>';
         foreach ($assessment['blocks'] as $block) {
             echo '<li>' . CwInvoiceMutabilityTools::html($block) . '</li>';
@@ -186,7 +186,7 @@ function cw_invoice_mutability_renderInvoiceSearch(string $moduleLink, string $n
     }
 
     if (!empty($assessment['warnings'])) {
-        echo '<p><strong>Advertencias:</strong></p><ul>';
+        echo '<p><strong>Warnings:</strong></p><ul>';
         foreach ($assessment['warnings'] as $warning) {
             echo '<li>' . CwInvoiceMutabilityTools::html($warning) . '</li>';
         }
@@ -196,32 +196,32 @@ function cw_invoice_mutability_renderInvoiceSearch(string $moduleLink, string $n
     echo '</div>';
 
     if (!CwInvoiceMutabilityTools::enabled('enable_draft_tools', false)) {
-        echo '<div class="alert alert-info">El modo avanzado está desactivado. Actívalo en la configuración superior y guarda para poder convertir facturas a Draft.</div>';
+        echo '<div class="alert alert-info">Advanced mode is disabled. Enable it in the settings above and save before converting invoices to Draft.</div>';
     } elseif ($assessment['allowed']) {
-        echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '#cwim-draft-tools" onsubmit="return confirm(\'Esta acción convertirá la factura a Draft. Se guardará snapshot, pero el cambio sigue siendo delicado. ¿Continuar?\');">';
+        echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '#cwim-draft-tools" onsubmit="return confirm(\'This action will convert the invoice to Draft. A snapshot will be saved, but this is still a sensitive change. Continue?\');">';
         echo '<input type="hidden" name="cwim_token" value="' . CwInvoiceMutabilityTools::html($nonce) . '">';
         echo '<input type="hidden" name="cwim_action" value="convert_to_draft">';
         echo '<input type="hidden" name="invoice_id" value="' . CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) . '">';
-        echo '<div class="form-group"><label>Motivo obligatorio</label><textarea class="form-control" name="reason" rows="3" required placeholder="Ej. Corrección interna antes de pago, factura no fiscalizada ni autorizada externamente."></textarea></div>';
-        echo '<div class="form-group"><label>Confirmación</label><input type="text" class="form-control" name="confirmation" required placeholder="Escribe: ' . CwInvoiceMutabilityTools::CONFIRM_CONVERT . '"></div>';
-        echo '<button type="submit" class="btn btn-warning"><i class="fa fa-edit"></i> Convertir factura a Draft</button>';
+        echo '<div class="form-group"><label>Required reason</label><textarea class="form-control" name="reason" rows="3" required placeholder="e.g. Internal correction before payment; invoice is not fiscalized or externally authorized."></textarea></div>';
+        echo '<div class="form-group"><label>Confirmation</label><input type="text" class="form-control" name="confirmation" required placeholder="Type: ' . CwInvoiceMutabilityTools::CONFIRM_CONVERT . '"></div>';
+        echo '<button type="submit" class="btn btn-warning"><i class="fa fa-edit"></i> Convert invoice to Draft</button>';
         echo '</form>';
     }
 
     if ($status === 'Draft') {
         $lastLog = CwInvoiceMutabilityTools::latestConversionLog($selectedInvoiceId);
         if ($lastLog) {
-            echo '<hr><h4>Restaurar estado anterior</h4>';
-            echo '<p class="text-muted">Última conversión encontrada: log #' . CwInvoiceMutabilityTools::html((string) $lastLog->id) . ', estado anterior: <strong>' . CwInvoiceMutabilityTools::html((string) $lastLog->old_status) . '</strong>.</p>';
+            echo '<hr><h4>Restore previous status</h4>';
+            echo '<p class="text-muted">Last conversion found: log #' . CwInvoiceMutabilityTools::html((string) $lastLog->id) . ', previous status: <strong>' . CwInvoiceMutabilityTools::html((string) $lastLog->old_status) . '</strong>.</p>';
             if (CwInvoiceMutabilityTools::enabled('enable_draft_tools', false)) {
-                echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '#cwim-draft-tools" onsubmit="return confirm(\'Esto restaurará únicamente el estado anterior de la factura, no revierte los cambios realizados en los ítems. ¿Continuar?\');">';
+                echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '#cwim-draft-tools" onsubmit="return confirm(\'This will only restore the previous invoice status; it will not revert changes made to invoice items. Continue?\');">';
                 echo '<input type="hidden" name="cwim_token" value="' . CwInvoiceMutabilityTools::html($nonce) . '">';
                 echo '<input type="hidden" name="cwim_action" value="restore_status">';
                 echo '<input type="hidden" name="invoice_id" value="' . CwInvoiceMutabilityTools::html((string) $selectedInvoiceId) . '">';
                 echo '<input type="hidden" name="log_id" value="' . CwInvoiceMutabilityTools::html((string) $lastLog->id) . '">';
-                echo '<div class="form-group"><label>Motivo obligatorio</label><textarea class="form-control" name="reason" rows="2" required placeholder="Ej. Edición finalizada, devolver factura a estado anterior."></textarea></div>';
-                echo '<div class="form-group"><label>Confirmación</label><input type="text" class="form-control" name="confirmation" required placeholder="Escribe: ' . CwInvoiceMutabilityTools::CONFIRM_RESTORE . '"></div>';
-                echo '<button type="submit" class="btn btn-primary"><i class="fa fa-undo"></i> Restaurar estado anterior</button>';
+                echo '<div class="form-group"><label>Required reason</label><textarea class="form-control" name="reason" rows="2" required placeholder="e.g. Editing completed, restore invoice to previous status."></textarea></div>';
+                echo '<div class="form-group"><label>Confirmation</label><input type="text" class="form-control" name="confirmation" required placeholder="Type: ' . CwInvoiceMutabilityTools::CONFIRM_RESTORE . '"></div>';
+                echo '<button type="submit" class="btn btn-primary"><i class="fa fa-undo"></i> Restore previous status</button>';
                 echo '</form>';
             }
         }
@@ -229,8 +229,8 @@ function cw_invoice_mutability_renderInvoiceSearch(string $moduleLink, string $n
 
     $logs = CwInvoiceMutabilityTools::recentLogs($selectedInvoiceId, 10);
     if (!empty($logs)) {
-        echo '<hr><h4>Historial de esta factura</h4>';
-        echo '<div class="table-responsive"><table class="table table-condensed table-striped"><thead><tr><th>ID</th><th>Fecha</th><th>Admin</th><th>Acción</th><th>Estado</th><th>Motivo</th></tr></thead><tbody>';
+        echo '<hr><h4>History for this invoice</h4>';
+        echo '<div class="table-responsive"><table class="table table-condensed table-striped"><thead><tr><th>ID</th><th>Date</th><th>Admin</th><th>Action</th><th>Status</th><th>Reason</th></tr></thead><tbody>';
         foreach ($logs as $log) {
             echo '<tr>';
             echo '<td>' . CwInvoiceMutabilityTools::html((string) ($log['id'] ?? '')) . '</td>';
@@ -257,13 +257,13 @@ function cw_invoice_mutability_output($vars)
     try {
         CwInvoiceMutabilityTools::ensureLogTable();
     } catch (Throwable $e) {
-        $messages[] = ['danger', 'No fue posible preparar la tabla de auditoría: ' . $e->getMessage()];
+        $messages[] = ['danger', 'Could not prepare the audit table: ' . $e->getMessage()];
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $postedToken = $_POST['cwim_token'] ?? '';
         if (!CwInvoiceMutabilityTools::verifyNonce($postedToken)) {
-            $messages[] = ['danger', 'Token de seguridad inválido. Recarga la página e intenta nuevamente.'];
+            $messages[] = ['danger', 'Invalid security token. Reload the page and try again.'];
         } else {
             $action = $_POST['cwim_action'] ?? '';
 
@@ -283,13 +283,13 @@ function cw_invoice_mutability_output($vars)
                 CwInvoiceMutabilityTools::setSetting('enable_draft_tools', $enableDraftTools);
                 CwInvoiceMutabilityTools::setSetting('draft_guard_keywords', $guardKeywords);
 
-                $messages[] = ['success', 'Configuración guardada.'];
+                $messages[] = ['success', 'Settings saved.'];
 
                 if ($writeConfiguration === 'on') {
                     $result = CwInvoiceMutabilityTools::syncConfigurationFlag($enableMutation === 'on');
                     $messages[] = [$result['success'] ? 'success' : 'danger', $result['message']];
                 } else {
-                    $messages[] = ['warning', 'Modo runtime activo: no se modificó configuration.php. Si WHMCS no permite editar facturas, activa la configuración oficial persistente.'];
+                    $messages[] = ['warning', 'Runtime mode active: configuration.php was not modified. If WHMCS does not allow invoice editing, enable the official persistent configuration option.'];
                 }
 
                 logActivity('CW Invoice Mutability settings saved. Mutation: ' . ($enableMutation === 'on' ? 'enabled' : 'disabled') . '. Draft tools: ' . ($enableDraftTools === 'on' ? 'enabled' : 'disabled'));
@@ -342,10 +342,10 @@ function cw_invoice_mutability_output($vars)
     echo '<div class="panel-heading"><h3 class="panel-title">CW Invoice Mutability <small>v' . CwInvoiceMutabilityTools::html($vars['version']) . '</small></h3></div>';
     echo '<div class="panel-body">';
 
-    echo '<p><strong>Creado por <a href="https://codigoweb.dev" target="_blank" rel="noopener">Codigoweb.dev</a>.</strong> Este módulo permite activar o desactivar la edición administrativa de facturas publicadas en WHMCS 9 sin editar manualmente archivos. También incluye una herramienta avanzada para convertir facturas internas <code>Unpaid</code> a <code>Draft</code> con auditoría.</p>';
-    echo '<p><a class="btn btn-success" href="' . CwInvoiceMutabilityTools::html(CwInvoiceMutabilityTools::DONATION_URL) . '" target="_blank" rel="noopener"><i class="fa fa-heart"></i> Donar por PayPal</a> <a class="btn btn-default" href="https://docs.whmcs.com/9-0/troubleshooting/troubleshoot-invoices/invoice-immutability-errors/" target="_blank" rel="noopener"><i class="fa fa-book"></i> Documentación WHMCS</a></p>';
+    echo '<p><strong>Created by <a href="https://codigoweb.dev" target="_blank" rel="noopener">Codigoweb.dev</a>.</strong> This module lets WHMCS 9 administrators enable or disable published invoice editing without manually editing files. It also includes an advanced audited tool to convert internal <code>Unpaid</code> invoices to <code>Draft</code>.</p>';
+    echo '<p><a class="btn btn-success" href="' . CwInvoiceMutabilityTools::html(CwInvoiceMutabilityTools::DONATION_URL) . '" target="_blank" rel="noopener"><i class="fa fa-heart"></i> Donate via PayPal</a> <a class="btn btn-default" href="https://docs.whmcs.com/9-0/troubleshooting/troubleshoot-invoices/invoice-immutability-errors/" target="_blank" rel="noopener"><i class="fa fa-book"></i> WHMCS documentation</a></p>';
 
-    echo '<div class="alert alert-warning"><strong>Importante:</strong> WHMCS recomienda usar notas de crédito/débito y advierte que editar facturas publicadas puede afectar auditoría, contabilidad o cumplimiento fiscal según el país. Usa este módulo bajo tu responsabilidad.</div>';
+    echo '<div class="alert alert-warning"><strong>Important:</strong> WHMCS recommends using credit/debit notes and warns that editing published invoices may affect audit trails, accounting, or tax compliance depending on your country. Use this module at your own risk.</div>';
 
     echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '">';
     echo '<input type="hidden" name="cwim_token" value="' . CwInvoiceMutabilityTools::html($nonce) . '">';
@@ -353,27 +353,27 @@ function cw_invoice_mutability_output($vars)
 
     echo '<div class="row">';
     echo '<div class="col-md-6">';
-    echo '<h4>Modo seguro / oficial actual</h4>';
-    echo '<div class="checkbox"><label><input type="checkbox" name="enable_mutation" value="1" ' . ($enableMutation ? 'checked' : '') . '> <strong>Permitir edición de facturas publicadas/no Draft</strong></label></div>';
-    echo '<div class="checkbox"><label><input type="checkbox" name="write_configuration" value="1" ' . ($writeConfiguration ? 'checked' : '') . '> Usar configuración oficial persistente en configuration.php</label></div>';
-    echo '<div class="checkbox"><label><input type="checkbox" name="hide_banner" value="1" ' . ($hideBanner ? 'checked' : '') . '> Ocultar banner de advertencia del Admin Area</label></div>';
+    echo '<h4>Safe mode / current official method</h4>';
+    echo '<div class="checkbox"><label><input type="checkbox" name="enable_mutation" value="1" ' . ($enableMutation ? 'checked' : '') . '> <strong>Allow editing published/non-Draft invoices</strong></label></div>';
+    echo '<div class="checkbox"><label><input type="checkbox" name="write_configuration" value="1" ' . ($writeConfiguration ? 'checked' : '') . '> Use official persistent configuration in configuration.php</label></div>';
+    echo '<div class="checkbox"><label><input type="checkbox" name="hide_banner" value="1" ' . ($hideBanner ? 'checked' : '') . '> Hide Admin Area warning banner</label></div>';
 
-    echo '<hr><h4>Modo avanzado / emergencia</h4>';
-    echo '<div class="checkbox"><label><input type="checkbox" name="enable_draft_tools" value="1" ' . ($enableDraftTools ? 'checked' : '') . '> <strong>Permitir convertir facturas Unpaid a Draft</strong></label></div>';
-    echo '<div class="form-group"><label>Palabras de protección fiscal/comprobante externo</label><textarea class="form-control" name="draft_guard_keywords" rows="6">' . CwInvoiceMutabilityTools::html($guardKeywords) . '</textarea><p class="help-block">Una palabra o frase por línea. Si aparece en notas, número o ítems de la factura, se bloquea la conversión a Draft.</p></div>';
-    echo '<p><button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Guardar y aplicar</button></p>';
+    echo '<hr><h4>Advanced / emergency mode</h4>';
+    echo '<div class="checkbox"><label><input type="checkbox" name="enable_draft_tools" value="1" ' . ($enableDraftTools ? 'checked' : '') . '> <strong>Allow converting Unpaid invoices to Draft</strong></label></div>';
+    echo '<div class="form-group"><label>Fiscal/external document protection keywords</label><textarea class="form-control" name="draft_guard_keywords" rows="6">' . CwInvoiceMutabilityTools::html($guardKeywords) . '</textarea><p class="help-block">One word or phrase per line. If it appears in invoice notes, invoice number, or invoice items, Draft conversion is blocked.</p></div>';
+    echo '<p><button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save and apply</button></p>';
     echo '</div>';
 
     echo '<div class="col-md-6">';
     echo '<table class="table table-striped table-condensed">';
     echo '<tbody>';
-    echo '<tr><th>Estado del módulo</th><td>' . ($enableMutation ? '<span class="label label-success">Edición habilitada</span>' : '<span class="label label-default">Edición deshabilitada</span>') . '</td></tr>';
-    echo '<tr><th>Modo Draft avanzado</th><td>' . ($enableDraftTools ? '<span class="label label-warning">Activo</span>' : '<span class="label label-default">Inactivo</span>') . '</td></tr>';
-    echo '<tr><th>Bandera runtime</th><td>' . ($runtimeActive ? '<span class="label label-success">Activa</span>' : '<span class="label label-default">Inactiva</span>') . '</td></tr>';
+    echo '<tr><th>Module status</th><td>' . ($enableMutation ? '<span class="label label-success">Editing enabled</span>' : '<span class="label label-default">Editing disabled</span>') . '</td></tr>';
+    echo '<tr><th>Advanced Draft mode</th><td>' . ($enableDraftTools ? '<span class="label label-warning">Active</span>' : '<span class="label label-default">Inactive</span>') . '</td></tr>';
+    echo '<tr><th>Runtime flag</th><td>' . ($runtimeActive ? '<span class="label label-success">Active</span>' : '<span class="label label-default">Inactive</span>') . '</td></tr>';
     echo '<tr><th>configuration.php</th><td>' . CwInvoiceMutabilityTools::html($configStatus['path']) . '</td></tr>';
-    echo '<tr><th>Legible / escribible</th><td>' . ($configStatus['readable'] ? 'Sí' : 'No') . ' / ' . ($configStatus['writable'] ? 'Sí' : 'No') . '</td></tr>';
-    echo '<tr><th>Bandera oficial detectada</th><td>' . ($configStatus['has_enabled_flag'] ? '<span class="label label-success">Sí</span>' : '<span class="label label-default">No</span>') . '</td></tr>';
-    echo '<tr><th>Bloque Codigoweb.dev</th><td>' . ($configStatus['has_cw_block'] ? '<span class="label label-info">Sí</span>' : '<span class="label label-default">No</span>') . '</td></tr>';
+    echo '<tr><th>Readable / writable</th><td>' . ($configStatus['readable'] ? 'Yes' : 'No') . ' / ' . ($configStatus['writable'] ? 'Yes' : 'No') . '</td></tr>';
+    echo '<tr><th>Official flag detected</th><td>' . ($configStatus['has_enabled_flag'] ? '<span class="label label-success">Yes</span>' : '<span class="label label-default">No</span>') . '</td></tr>';
+    echo '<tr><th>Codigoweb.dev block</th><td>' . ($configStatus['has_cw_block'] ? '<span class="label label-info">Yes</span>' : '<span class="label label-default">No</span>') . '</td></tr>';
     echo '</tbody></table>';
     if (!empty($configStatus['error'])) {
         echo '<div class="alert alert-danger">' . CwInvoiceMutabilityTools::html($configStatus['error']) . '</div>';
@@ -386,21 +386,21 @@ function cw_invoice_mutability_output($vars)
     echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '" style="display:inline-block;margin-right:10px;">';
     echo '<input type="hidden" name="cwim_token" value="' . CwInvoiceMutabilityTools::html($nonce) . '">';
     echo '<input type="hidden" name="cwim_action" value="sync">';
-    echo '<button type="submit" class="btn btn-default"><i class="fa fa-refresh"></i> Sincronizar configuration.php</button>';
+    echo '<button type="submit" class="btn btn-default"><i class="fa fa-refresh"></i> Sync configuration.php</button>';
     echo '</form>';
 
-    echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '" style="display:inline-block;" onsubmit="return confirm(\'Esto deshabilitará la edición y removerá la bandera oficial si existe. ¿Continuar?\');">';
+    echo '<form method="post" action="' . CwInvoiceMutabilityTools::html($moduleLink) . '" style="display:inline-block;" onsubmit="return confirm(\'This will disable editing and remove the official flag if it exists. Continue?\');">';
     echo '<input type="hidden" name="cwim_token" value="' . CwInvoiceMutabilityTools::html($nonce) . '">';
     echo '<input type="hidden" name="cwim_action" value="remove">';
-    echo '<button type="submit" class="btn btn-danger"><i class="fa fa-times"></i> Desactivar y remover bandera</button>';
+    echo '<button type="submit" class="btn btn-danger"><i class="fa fa-times"></i> Disable and remove flag</button>';
     echo '</form>';
 
-    echo '<h4 style="margin-top:25px;">Notas de diseño</h4>';
+    echo '<h4 style="margin-top:25px;">Design notes</h4>';
     echo '<ul>';
-    echo '<li>El módulo usa la bandera oficial <code>$allow_adminarea_invoice_mutation = true;</code> cuando el modo persistente está activo.</li>';
-    echo '<li>También define la bandera en runtime desde <code>hooks.php</code> como apoyo, pero el método persistente es el más compatible mientras WHMCS lo permita.</li>';
-    echo '<li>El modo avanzado no edita ítems ni totales: solo cambia estado <code>Unpaid → Draft</code>, guarda snapshot de factura/ítems/transacciones y registra la acción en Activity Log.</li>';
-    echo '<li>El modo avanzado bloquea facturas pagadas, canceladas, con transacciones, con fecha de pago o con señales de comprobante fiscal/externalizado.</li>';
+    echo '<li>The module uses the official <code>$allow_adminarea_invoice_mutation = true;</code> flag when persistent mode is active.</li>';
+    echo '<li>It also sets the flag at runtime from <code>hooks.php</code> as a fallback, but the persistent method is the most compatible while WHMCS allows it.</li>';
+    echo '<li>Advanced mode does not edit items or totals: it only changes status <code>Unpaid → Draft</code>, saves an invoice/items/transactions snapshot, and records the action in the Activity Log.</li>';
+    echo '<li>Advanced mode blocks paid, cancelled, transaction-linked, payment-dated, or fiscal/external-document invoices.</li>';
     echo '</ul>';
 
     echo '</div></div>';

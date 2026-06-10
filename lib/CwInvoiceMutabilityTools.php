@@ -18,8 +18,8 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
         public const CONFIG_BEGIN = '/* BEGIN CW Invoice Mutability - Codigoweb.dev */';
         public const CONFIG_END = '/* END CW Invoice Mutability - Codigoweb.dev */';
         public const LOG_TABLE = 'mod_cw_invoice_mutability_logs';
-        public const CONFIRM_CONVERT = 'CONVERTIR A DRAFT';
-        public const CONFIRM_RESTORE = 'RESTAURAR ESTADO';
+        public const CONFIRM_CONVERT = 'CONVERT TO DRAFT';
+        public const CONFIRM_RESTORE = 'RESTORE STATUS';
 
         /**
          * Return a module setting stored in tbladdonmodules.
@@ -144,18 +144,18 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
             $path = self::configPath();
 
             if (!is_file($path)) {
-                return ['success' => false, 'message' => 'No se encontró configuration.php en la raíz de WHMCS.'];
+                return ['success' => false, 'message' => 'configuration.php was not found in the WHMCS root directory.'];
             }
             if (!is_readable($path)) {
-                return ['success' => false, 'message' => 'configuration.php no es legible para PHP.'];
+                return ['success' => false, 'message' => 'configuration.php is not readable by PHP.'];
             }
             if (!is_writable($path)) {
-                return ['success' => false, 'message' => 'configuration.php no tiene permisos de escritura. Ajusta permisos temporalmente o usa el modo runtime del hook.'];
+                return ['success' => false, 'message' => 'configuration.php is not writable. Temporarily adjust permissions or use hook runtime mode.'];
             }
 
             $original = file_get_contents($path);
             if ($original === false) {
-                return ['success' => false, 'message' => 'No fue posible leer configuration.php.'];
+                return ['success' => false, 'message' => 'Could not read configuration.php.'];
             }
 
             $updated = self::removeMutationFlagFromConfig($original);
@@ -170,25 +170,25 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
             }
 
             if ($updated === $original) {
-                return ['success' => true, 'message' => $enable ? 'La bandera oficial ya estaba activada.' : 'La bandera oficial ya estaba removida.'];
+                return ['success' => true, 'message' => $enable ? 'The official flag was already enabled.' : 'The official flag was already removed.'];
             }
 
             $backupPath = $path . '.cwim-' . date('Ymd-His') . '.bak';
             if (!copy($path, $backupPath)) {
-                return ['success' => false, 'message' => 'No fue posible crear backup de configuration.php. No se aplicaron cambios.'];
+                return ['success' => false, 'message' => 'Could not create a backup of configuration.php. No changes were applied.'];
             }
             @chmod($backupPath, 0600);
 
             $bytes = file_put_contents($path, $updated, LOCK_EX);
             if ($bytes === false) {
-                return ['success' => false, 'message' => 'No fue posible escribir configuration.php. Backup creado en: ' . basename($backupPath)];
+                return ['success' => false, 'message' => 'Could not write configuration.php. Backup created at: ' . basename($backupPath)];
             }
 
             return [
                 'success' => true,
                 'message' => $enable
-                    ? 'Edición de facturas activada usando la bandera oficial de WHMCS. Backup: ' . basename($backupPath)
-                    : 'Edición de facturas desactivada y bandera removida. Backup: ' . basename($backupPath),
+                    ? 'Invoice editing enabled using the official WHMCS flag. Backup: ' . basename($backupPath)
+                    : 'Invoice editing disabled and flag removed. Backup: ' . basename($backupPath),
             ];
         }
 
@@ -255,7 +255,27 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
 
         public static function defaultGuardKeywords(): string
         {
-            return "SRI\nautorizada\nautorizado\nclave de acceso\ncomprobante electronico\ncomprobante electrónico\nfactura electronica\nfactura electrónica\nUUID\nCUFE\nfiscalizada\nfiscalizado";
+            return "SRI
+authorized
+authorization
+access key
+electronic invoice
+e-invoice
+tax authority
+fiscalized
+external invoice
+invoice authorization
+UUID
+CUFE
+autorizada
+autorizado
+clave de acceso
+comprobante electronico
+comprobante electrónico
+factura electronica
+factura electrónica
+fiscalizada
+fiscalizado";
         }
 
         public static function guardKeywords(): array
@@ -340,7 +360,7 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
                 ->first();
 
             if (!$client) {
-                return 'Cliente #' . $clientId;
+                return 'Client #' . $clientId;
             }
 
             $company = trim((string) ($client->companyname ?? ''));
@@ -348,7 +368,7 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
             $email = trim((string) ($client->email ?? ''));
             $label = $company !== '' ? $company : $name;
             if ($label === '') {
-                $label = 'Cliente #' . $clientId;
+                $label = 'Client #' . $clientId;
             }
             if ($email !== '') {
                 $label .= ' <' . $email . '>';
@@ -454,7 +474,7 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
                     'invoice_data' => [],
                     'items' => [],
                     'transactions' => [],
-                    'blocks' => ['No se encontró la factura #' . $invoiceId . '.'],
+                    'blocks' => ['Invoice #' . $invoiceId . ' was not found.'],
                     'warnings' => [],
                     'status' => '',
                 ];
@@ -468,30 +488,30 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
             $warnings = [];
 
             if ($status === 'Draft') {
-                $blocks[] = 'La factura ya está en Draft.';
+                $blocks[] = 'The invoice is already in Draft.';
             } elseif ($status !== 'Unpaid') {
-                $blocks[] = 'Solo se permite convertir a Draft facturas en estado Unpaid. Estado actual: ' . ($status !== '' ? $status : 'desconocido') . '.';
+                $blocks[] = 'Only Unpaid invoices can be converted to Draft. Current status: ' . ($status !== '' ? $status : 'unknown') . '.';
             }
 
             if (count($transactions) > 0) {
-                $blocks[] = 'La factura tiene transacciones asociadas en tblaccounts. No se modifica para evitar afectar pagos o auditoría.';
+                $blocks[] = 'The invoice has related transactions in tblaccounts. It will not be changed to avoid affecting payments or audit trails.';
             }
 
             if (self::invoiceDatePaidIsSet($invoiceData)) {
-                $blocks[] = 'La factura tiene fecha de pago registrada.';
+                $blocks[] = 'The invoice has a payment date recorded.';
             }
 
             if (self::invoiceHasGatewayTransactionReference($invoiceData)) {
-                $blocks[] = 'La factura contiene referencia de transacción/pasarela en sus campos.';
+                $blocks[] = 'The invoice contains a transaction/gateway reference in its fields.';
             }
 
             $keywordMatches = self::matchedGuardKeywords($invoiceData, $items);
             if (!empty($keywordMatches)) {
-                $blocks[] = 'La factura coincide con palabras de protección fiscal/comprobante externo: ' . implode(', ', $keywordMatches) . '.';
+                $blocks[] = 'The invoice matches fiscal/external document protection keywords: ' . implode(', ', $keywordMatches) . '.';
             }
 
             if (empty($invoiceData['duedate'] ?? '')) {
-                $warnings[] = 'No se detectó fecha de vencimiento en la factura.';
+                $warnings[] = 'No due date was detected on the invoice.';
             }
 
             return [
@@ -550,24 +570,24 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
         public static function convertInvoiceToDraft(int $invoiceId, string $reason, string $confirmation): array
         {
             if (!self::enabled('enable_draft_tools', false)) {
-                return ['success' => false, 'message' => 'El modo avanzado para convertir a Draft está desactivado.'];
+                return ['success' => false, 'message' => 'Advanced Draft conversion mode is disabled.'];
             }
 
             if (trim($confirmation) !== self::CONFIRM_CONVERT) {
-                return ['success' => false, 'message' => 'Confirmación incorrecta. Debes escribir exactamente: ' . self::CONFIRM_CONVERT];
+                return ['success' => false, 'message' => 'Confirmation incorrecta. Debes escribir exactamente: ' . self::CONFIRM_CONVERT];
             }
 
             $reason = trim($reason);
             if ($reason === '') {
-                return ['success' => false, 'message' => 'Debes indicar un motivo para el cambio.'];
+                return ['success' => false, 'message' => 'You must provide a reason for the change.'];
             }
 
             $assessment = self::assessInvoiceForDraft($invoiceId);
             if (!$assessment['exists']) {
-                return ['success' => false, 'message' => 'No se encontró la factura #' . $invoiceId . '.'];
+                return ['success' => false, 'message' => 'Invoice #' . $invoiceId . ' was not found.'];
             }
             if (!$assessment['allowed']) {
-                return ['success' => false, 'message' => 'No se puede convertir a Draft: ' . implode(' ', $assessment['blocks'])];
+                return ['success' => false, 'message' => 'Cannot convert to Draft: ' . implode(' ', $assessment['blocks'])];
             }
 
             $invoiceData = $assessment['invoice_data'];
@@ -587,22 +607,22 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
 
             logActivity('CW Invoice Mutability: invoice #' . $invoiceId . ' converted from ' . $oldStatus . ' to Draft by admin #' . self::currentAdminId() . '. Log ID: ' . $logId);
 
-            return ['success' => true, 'message' => 'Factura #' . $invoiceId . ' convertida a Draft. Snapshot guardado en log #' . $logId . '.'];
+            return ['success' => true, 'message' => 'Invoice #' . $invoiceId . ' converted to Draft. Snapshot saved in log #' . $logId . '.'];
         }
 
         public static function restoreInvoiceStatus(int $invoiceId, int $logId, string $reason, string $confirmation): array
         {
             if (!self::enabled('enable_draft_tools', false)) {
-                return ['success' => false, 'message' => 'El modo avanzado para restaurar estado está desactivado.'];
+                return ['success' => false, 'message' => 'Advanced status restore mode is disabled.'];
             }
 
             if (trim($confirmation) !== self::CONFIRM_RESTORE) {
-                return ['success' => false, 'message' => 'Confirmación incorrecta. Debes escribir exactamente: ' . self::CONFIRM_RESTORE];
+                return ['success' => false, 'message' => 'Confirmation incorrecta. Debes escribir exactamente: ' . self::CONFIRM_RESTORE];
             }
 
             $reason = trim($reason);
             if ($reason === '') {
-                return ['success' => false, 'message' => 'Debes indicar un motivo para restaurar el estado.'];
+                return ['success' => false, 'message' => 'You must provide a reason to restore the status.'];
             }
 
             self::ensureLogTable();
@@ -613,29 +633,29 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
                 ->first();
 
             if (!$log) {
-                return ['success' => false, 'message' => 'No se encontró un log válido de conversión para esta factura.'];
+                return ['success' => false, 'message' => 'No valid conversion log was found for this invoice.'];
             }
 
             $invoice = self::findInvoice($invoiceId);
             if (!$invoice) {
-                return ['success' => false, 'message' => 'No se encontró la factura #' . $invoiceId . '.'];
+                return ['success' => false, 'message' => 'Invoice #' . $invoiceId . ' was not found.'];
             }
 
             $invoiceData = self::collectionToArray($invoice);
             $currentStatus = (string) ($invoiceData['status'] ?? '');
             if ($currentStatus !== 'Draft') {
-                return ['success' => false, 'message' => 'Solo se puede restaurar desde Draft. Estado actual: ' . $currentStatus . '.'];
+                return ['success' => false, 'message' => 'Solo se puede restaurar desde Draft. Current status: ' . $currentStatus . '.'];
             }
 
             $targetStatus = (string) ($log->old_status ?? '');
             if (!in_array($targetStatus, ['Unpaid'], true)) {
-                return ['success' => false, 'message' => 'Estado anterior no permitido para restauración automática: ' . $targetStatus . '.'];
+                return ['success' => false, 'message' => 'Previous status is not allowed for automatic restore: ' . $targetStatus . '.'];
             }
 
             $items = self::invoiceItems($invoiceId);
             $transactions = self::invoiceTransactions($invoiceId);
             if (count($transactions) > 0) {
-                return ['success' => false, 'message' => 'La factura ahora tiene transacciones asociadas. No se restaura automáticamente.'];
+                return ['success' => false, 'message' => 'The invoice now has related transactions. It will not be restored automatically.'];
             }
 
             $restoreLogId = self::insertLog(
@@ -653,7 +673,7 @@ if (!class_exists('CwInvoiceMutabilityTools')) {
 
             logActivity('CW Invoice Mutability: invoice #' . $invoiceId . ' restored from Draft to ' . $targetStatus . ' by admin #' . self::currentAdminId() . '. Log ID: ' . $restoreLogId);
 
-            return ['success' => true, 'message' => 'Factura #' . $invoiceId . ' restaurada a ' . $targetStatus . '. Log #' . $restoreLogId . '.'];
+            return ['success' => true, 'message' => 'Invoice #' . $invoiceId . ' restored to ' . $targetStatus . '. Log #' . $restoreLogId . '.'];
         }
     }
 }
