@@ -78,18 +78,18 @@ add_hook('AdminInvoicesControlsOutput', 1, function ($vars) {
 
     if (CwInvoiceMutabilityTools::enabled('enable_mutation', false)) {
         $html .= '<div class="alert alert-info" style="margin-top:10px;">'
-            . '<strong>CW Invoice Mutability:</strong> edición de facturas habilitada por Codigoweb.dev. '
-            . '<a href="' . CwInvoiceMutabilityTools::html($donationUrl) . '" target="_blank" rel="noopener">Donar por PayPal</a>.'
+            . '<strong>CW Invoice Mutability:</strong> invoice editing enabled by Codigoweb.dev. '
+            . '<a href="' . CwInvoiceMutabilityTools::html($donationUrl) . '" target="_blank" rel="noopener">Donate via PayPal</a>.'
             . '</div>';
     }
 
     if ($invoiceId > 0 && CwInvoiceMutabilityTools::enabled('enable_draft_tools', false)) {
         $html .= '<div class="well well-sm" style="margin-top:10px;">'
-            . '<strong>Modo avanzado Codigoweb.dev:</strong> '
+            . '<strong>Codigoweb.dev advanced mode:</strong> '
             . '<a class="btn btn-warning btn-sm" href="addonmodules.php?module=cw_invoice_mutability&invoice_id=' . (int) $invoiceId . '#cwim-draft-tools">'
-            . '<i class="fa fa-edit"></i> Revisar/convertir a Draft'
+            . '<i class="fa fa-edit"></i> Review/convert to Draft'
             . '</a> '
-            . '<span class="text-muted">Solo para facturas Unpaid sin transacciones.</span>'
+            . '<span class="text-muted">Only for Unpaid invoices without transactions.</span>'
             . '</div>';
     }
 
